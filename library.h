@@ -92,7 +92,7 @@ Value evaluateTree(Node *node, EnvEntry **globalEnv);
 
 Value env_get(EnvEntry* env, const char* name);
 
-void env_set(EnvEntry** env, const char* name, int value);
+void env_set(EnvEntry** env, const char* name, Value value);
 
 void env_free(EnvEntry* env);
 

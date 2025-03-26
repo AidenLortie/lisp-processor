@@ -226,18 +226,18 @@ Value evaluateTree(Node *node, EnvEntry **globalEnv){
         return (Value){.type = VAL_STRING, .strValue = node->val.strValue};
     }
 
-    int result = 0;
+    Value result = (Value){.type = VAL_INT, .intValue = 0};
     Node *current = node->childNode;
     switch(node->val.op){
         case ADD: {
             while (current != NULL) {
                 if (current->type == NODE_OPERATOR) {
-                    result += evaluateTree(current, globalEnv).intValue;
+                    result.intValue += evaluateTree(current, globalEnv).intValue;
                     current = current->nextNode;
                     continue;
                 }
 
-                result += evaluateTree(current, globalEnv).intValue;
+                result.intValue += evaluateTree(current, globalEnv).intValue;
                 current = current->nextNode;
 
             }
@@ -245,45 +245,45 @@ Value evaluateTree(Node *node, EnvEntry **globalEnv){
         }
         case SUB:
         {
-            result = evaluateTree(current, globalEnv).intValue;
+            result.intValue = evaluateTree(current, globalEnv).intValue;
             current = current->nextNode;
             while (current != NULL) {
                 if (current->type == NODE_OPERATOR) {
-                    result -= evaluateTree(current, globalEnv).intValue;
+                    result.intValue -= evaluateTree(current, globalEnv).intValue;
                     current = current->nextNode;
                     continue;
                 }
 
-                result -= evaluateTree(current, globalEnv).intValue;
+                result.intValue -= evaluateTree(current, globalEnv).intValue;
                 current = current->nextNode;
             }
             break;
         }
         case MUL:{
-            result = 1;
+            result = (Value){.type=VAL_INT, .intValue=1};
             while (current != NULL) {
                 if (current->type == NODE_OPERATOR) {
-                    result *= evaluateTree(current, globalEnv).intValue;
+                    result.intValue *= evaluateTree(current, globalEnv).intValue;
                     current = current->nextNode;
                     continue;
                 }
 
-                result *= evaluateTree(current, globalEnv).intValue;
+                result.intValue *= evaluateTree(current, globalEnv).intValue;
                 current = current->nextNode;
             }
             break;
         }
         case DIV: {
-            result = evaluateTree(current, globalEnv);
+            result.intValue = evaluateTree(current, globalEnv).intValue;
             current = current->nextNode;
             while (current != NULL) {
                 if (current->type == NODE_OPERATOR) {
-                    result /= evaluateTree(current, globalEnv);
+                    result.intValue /= evaluateTree(current, globalEnv).intValue;
                     current = current->nextNode;
                     continue;
                 }
 
-                result /= evaluateTree(current, globalEnv);
+                result.intValue /= evaluateTree(current, globalEnv).intValue;
                 current = current->nextNode;
             }
             break;
@@ -302,7 +302,7 @@ Value evaluateTree(Node *node, EnvEntry **globalEnv){
                 exit(1);
             }
 
-            int value = evaluateTree(exprNode, globalEnv);
+            Value value = evaluateTree(exprNode, globalEnv);
             env_set(globalEnv, varNode->val.strValue, value);
             return value;
         }
@@ -323,11 +323,8 @@ Value evaluateTree(Node *node, EnvEntry **globalEnv){
             Node* trueBranch = current->nextNode;
             Node* falseBranch = trueBranch->nextNode;
 
-            if(evaluateTree(condition, globalEnv)){
+            if(evaluateTree(condition, globalEnv).intValue){
                 result = evaluateTree(trueBranch, globalEnv);
-            }else{
-                result = evaluateTree(falseBranch, globalEnv);
-            }
             break;
         }
         case GT: {
@@ -336,10 +333,17 @@ Value evaluateTree(Node *node, EnvEntry **globalEnv){
                 exit(1);
             }
 
-            int left = evaluateTree(current, globalEnv);
-            int right = evaluateTree(current->nextNode, globalEnv);
-            result = left > right;
+            Value left = evaluateTree(current, globalEnv);
+            Value right = evaluateTree(current->nextNode, globalEnv);
+
+            if(left.type == VAL_INT && right.type == VAL_INT){
+                result.intValue = left.intValue > right.intValue;
+            } else {
+                fprintf(stderr, "Error: Expected two INTs\n");
+                exit(1);
+            }
             break;
+        }
         }
         case LT: {
             if(current == NULL || current->nextNode == NULL){
@@ -347,9 +351,15 @@ Value evaluateTree(Node *node, EnvEntry **globalEnv){
                 exit(1);
             }
 
-            int left = evaluateTree(current, globalEnv);
-            int right = evaluateTree(current->nextNode, globalEnv);
-            result = left < right;
+            Value left = evaluateTree(current, globalEnv);
+            Value right = evaluateTree(current->nextNode, globalEnv);
+            if(left.type == VAL_INT && right.type == VAL_INT){
+                result.intValue = left.intValue < right.intValue;
+            } else {
+                fprintf(stderr, "Error: Expected two INTs\n");
+                exit(1);
+            }
+
             break;
         }
         case EQ: {
@@ -358,9 +368,16 @@ Value evaluateTree(Node *node, EnvEntry **globalEnv){
                 exit(1);
             }
 
-            int left = evaluateTree(current, globalEnv);
-            int right = evaluateTree(current->nextNode, globalEnv);
-            result = left == right;
+            Value left = evaluateTree(current, globalEnv);
+            Value right = evaluateTree(current->nextNode, globalEnv);
+            if(left.type == VAL_INT && right.type == VAL_INT){
+                result.intValue = left.intValue == right.intValue;
+            } else if (left.type == VAL_STRING && right.type == VAL_STRING){
+                result.intValue = strcmp(left.strValue, right.strValue) == 0;
+            } else {
+                fprintf(stderr, "Error: Cannot compare different types\n");
+                exit(1);
+            }
             break;
         }
         case GTE: {
@@ -369,9 +386,14 @@ Value evaluateTree(Node *node, EnvEntry **globalEnv){
                 exit(1);
             }
 
-            int left = evaluateTree(current, globalEnv);
-            int right = evaluateTree(current->nextNode, globalEnv);
-            result = left >= right;
+            Value left = evaluateTree(current, globalEnv);
+            Value right = evaluateTree(current->nextNode, globalEnv);
+            if(left.type == VAL_INT && right.type == VAL_INT){
+                result.intValue = left.intValue >= right.intValue;
+            } else {
+                fprintf(stderr, "Error: Expected two INTs\n");
+                exit(1);
+            }
             break;
         }
         case LTE: {
@@ -380,9 +402,14 @@ Value evaluateTree(Node *node, EnvEntry **globalEnv){
                 exit(1);
             }
 
-            int left = evaluateTree(current, globalEnv);
-            int right = evaluateTree(current->nextNode, globalEnv);
-            result = left <= right;
+            Value left = evaluateTree(current, globalEnv);
+            Value right = evaluateTree(current->nextNode, globalEnv);
+            if(left.type == VAL_INT && right.type == VAL_INT){
+                result.intValue = left.intValue <= right.intValue;
+            } else {
+                fprintf(stderr, "Error: Expected two INTs\n");
+                exit(1);
+            }
             break;
         }
         case AND: {
@@ -391,9 +418,14 @@ Value evaluateTree(Node *node, EnvEntry **globalEnv){
                 exit(1);
             }
 
-            int left = evaluateTree(current, globalEnv);
-            int right = evaluateTree(current->nextNode, globalEnv);
-            result = left && right;
+            Value left = evaluateTree(current, globalEnv);
+            Value right = evaluateTree(current->nextNode, globalEnv);
+            if(left.type == VAL_INT && right.type == VAL_INT){
+                result.intValue = left.intValue && right.intValue;
+            } else {
+                fprintf(stderr, "Error: Expected two INTs\n");
+                exit(1);
+            }
             break;
         }
         case OR: {
@@ -402,9 +434,14 @@ Value evaluateTree(Node *node, EnvEntry **globalEnv){
                 exit(1);
             }
 
-            int left = evaluateTree(current, globalEnv);
-            int right = evaluateTree(current->nextNode, globalEnv);
-            result = left || right;
+            Value left = evaluateTree(current, globalEnv);
+            Value right = evaluateTree(current->nextNode, globalEnv);
+            if(left.type == VAL_INT && right.type == VAL_INT){
+                result.intValue = left.intValue || right.intValue;
+            } else {
+                fprintf(stderr, "Error: Expected two INTs\n");
+                exit(1);
+            }
             break;
         }
         case NOT: {
@@ -413,19 +450,30 @@ Value evaluateTree(Node *node, EnvEntry **globalEnv){
                 exit(1);
             }
 
-            result = !evaluateTree(current, globalEnv);
+            Value val = evaluateTree(current, globalEnv);
+            if(val.type == VAL_INT){
+                result.intValue = !val.intValue;
+            } else {
+                fprintf(stderr, "Error: Expected INT\n");
+                exit(1);
+            }
             break;
         }
         case PRINT :{
             while (current != NULL) {
-                result = evaluateTree(current, globalEnv);
-                printf("%d\n", result);
+                Value val = evaluateTree(current, globalEnv);
+                if(val.type == VAL_INT){
+                    printf("%d\n", val.intValue);
+                }else{
+                    printf("%s\n", val.strValue);
+                }
                 current = current->nextNode;
             }
+            return (Value){.type = VAL_INT, .intValue = 0};
             break;
         }
         default:
-            return 0;
+            return (Value){.type = VAL_INT, .intValue = 0};
     }
 
     return result;
@@ -457,7 +505,7 @@ Value env_get(EnvEntry* env, const char* name) {
  * @param name
  * @param value
  */
-void env_set(EnvEntry** env, const char* name, int value) {
+void env_set(EnvEntry** env, const char* name, Value value) {
     EnvEntry* current = *env;
 
     while(current != NULL){
