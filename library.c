@@ -46,6 +46,13 @@ Node* createVariableNode(char* name){
     return node;
 }
 
+Node* createStringLiteralNode(char* value){
+    Node *node = createNode(NODE_STRING_LITERAL, 0);
+    node->val.strValue = (char*)malloc(strlen(value) + 1);
+    strcpy(node->val.strValue, value);
+    return node;
+}
+
 /**
  * @brief Generate a new node
  * @param type The type of the node
@@ -111,6 +118,12 @@ void printHelper(Node *node, char* prefix, int isLastChild){
             printf("|-- " COLOR_YELLOW "%s\n" COLOR_RESET, node->val.strValue);
         } else {
             printf("\\-- " COLOR_YELLOW "%s\n" COLOR_RESET, node->val.strValue);
+        }
+    }else if(node->type == NODE_STRING_LITERAL){
+        if(!isLastChild){
+            printf("|-- " COLOR_MAGENTA "\"%s\"\n" COLOR_RESET, node->val.strValue);
+        } else {
+            printf("\\-- " COLOR_MAGENTA "\"%s\"\n" COLOR_RESET, node->val.strValue);
         }
     }else{
         if(!isLastChild){
@@ -230,18 +243,48 @@ Value evaluateTree(Node *node, EnvEntry **globalEnv){
     Node *current = node->childNode;
     switch(node->val.op){
         case ADD: {
-            while (current != NULL) {
-                if (current->type == NODE_OPERATOR) {
-                    result.intValue += evaluateTree(current, globalEnv).intValue;
-                    current = current->nextNode;
-                    continue;
+            Node* current = node->childNode;
+            int isStringConcat = 0;
+
+            // Peek ahead to check if any operand is a string
+            for (Node* n = current; n != NULL; n = n->nextNode) {
+                Value val = evaluateTree(n, globalEnv);
+                if (val.type == VAL_STRING) {
+                    isStringConcat = 1;
+                    break;
                 }
-
-                result.intValue += evaluateTree(current, globalEnv).intValue;
-                current = current->nextNode;
-
             }
-            break;
+
+            if (isStringConcat) {
+                // String concatenation path
+                char buffer[2048] = {0};
+                for (Node* n = current; n != NULL; n = n->nextNode) {
+                    Value val = evaluateTree(n, globalEnv);
+                    if (val.type == VAL_STRING) {
+                        strcat(buffer, val.strValue);
+                    } else if (val.type == VAL_INT) {
+                        char tmp[32];
+                        sprintf(tmp, "%d", val.intValue);
+                        strcat(buffer, tmp);
+                    } else {
+                        fprintf(stderr, "Error: Expected string or int in +\n");
+                        exit(1);
+                    }
+                }
+                return makeStringValue(buffer);
+            } else {
+                // Pure numeric add
+                int sum = 0;
+                for (; current != NULL; current = current->nextNode) {
+                    Value val = evaluateTree(current, globalEnv);
+                    if (val.type != VAL_INT) {
+                        fprintf(stderr, "Error: Expected INT in +\n");
+                        exit(1);
+                    }
+                    sum += val.intValue;
+                }
+                return makeIntValue(sum);
+            }
         }
         case SUB:
         {

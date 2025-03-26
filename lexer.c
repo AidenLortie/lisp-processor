@@ -183,8 +183,8 @@ Node* parseExpr(Token** current) {
             child = createVariableNode(token->value);
             *current = token->next;
         } else if (token->type == TOKEN_STRING) {
-            fprintf(stderr, "Strings not supported yet\n");
-            exit(1);
+            child = createStringLiteralNode(token->value);
+            *current = token->next;
         } else {
             fprintf(stderr, "Unexpected token '%s'\n", token->value);
             exit(1);

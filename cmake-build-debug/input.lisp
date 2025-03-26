@@ -1,1 +1,1 @@
-(seq (def a 10) (def b 5) (def c 2) (def d 100) (print (+ a b)) (print (* a b)) (print (- d (* b c))) (print (/ d a)) (def e (+ (* a b) (- d 50))) (print e) (print (+ (* a (+ b c)) (/ d e))) (def x (+ 1 2 3)) (def y (* x x)) (def z (+ y x d)) (print x) (print y) (print z) (print (+ (+ (+ 1 2) (+ 3 4)) (+ 5 6))) (print 42) (print 99) (print (+ 1 1 1 1 1 1 1 1 1 1)) (seq (print 123) (print 456) (print (+ 789 1))))
+(print "Hello, World!")
