@@ -1,0 +1,3 @@
+X:/Documents/LISP-LITE/cmake-build-debug/CMakeFiles/LISP_LITE.dir
+X:/Documents/LISP-LITE/cmake-build-debug/CMakeFiles/edit_cache.dir
+X:/Documents/LISP-LITE/cmake-build-debug/CMakeFiles/rebuild_cache.dir
