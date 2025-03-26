@@ -133,6 +133,7 @@ int getOperatorCode(const char* ident) {
     if (strcmp(ident, "or") == 0) return OR;
     if (strcmp(ident, "not") == 0) return NOT;
     if (strcmp(ident, "print") == 0) return PRINT;
+    if (strcmp(ident, "input") == 0) return INPUT;
     fprintf(stderr, "Unknown operator '%s'\n", ident);
     exit(1);
 }

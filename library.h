@@ -17,7 +17,8 @@ enum operators {
     AND,
     OR,
     NOT,
-    PRINT
+    PRINT,
+    INPUT
 };
 
 typedef enum {

@@ -207,6 +207,8 @@ char* getOperatorSymbol(int operator){
             return "NOT";
         case PRINT:
             return "PRINT";
+        case INPUT:
+            return "INPUT";
         default: {
             static char buf[16];
             snprintf(buf, sizeof(buf), "OP_%d", operator);
@@ -514,6 +516,21 @@ Value evaluateTree(Node *node, EnvEntry **globalEnv){
             }
             return (Value){.type = VAL_INT, .intValue = 0};
             break;
+        }
+        case INPUT :{
+            char buffer[1024];
+            if(fgets(buffer, sizeof(buffer), stdin) == NULL){
+                fprintf(stderr, "Error: Could not read input\n");
+                exit(1);
+            }
+
+            // Remove newline
+            size_t len = strlen(buffer);
+            if (len > 0 && buffer[len - 1] == '\n') {
+                buffer[len - 1] = '\0';
+            }
+
+            return makeStringValue(buffer);
         }
         default:
             return (Value){.type = VAL_INT, .intValue = 0};
